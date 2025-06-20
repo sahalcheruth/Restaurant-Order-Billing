@@ -1,0 +1,7 @@
+echo vens/ > .gitignore
+echo __pycache__/ >> .gitignore
+echo *.pyc >> .gitignore
+echo db.sqlite3 >> .gitignore
+echo .env >> .gitignore
+echo *.log >> .gitignore
+echo staticfiles/ >> .gitignore

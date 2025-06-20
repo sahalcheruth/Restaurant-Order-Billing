@@ -1,0 +1,117 @@
+{% load calc_filters %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Saved Orders</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light py-4">
+<div class="container">
+
+
+
+
+    <a href="{% url 'home' %}"><button type="submit" class="btn btn-primary">New Order</button></a>
+
+    <br>
+    <br>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Saved Orders</h2>
+        <a href="{% url 'download_orders_csv' %}?table={{ filter_table }}&date_from={{ filter_date_from }}&date_to={{ filter_date_to }}&status={{ filter_status }}" class="btn btn-success">
+    Download Filtered CSV
+</a>
+
+    </div>
+
+    <!-- Filter Form -->
+    <form method="get" class="card shadow p-3 mb-4">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">Table Number</label>
+                <input type="number" name="table" class="form-control" value="{{ filter_table }}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Date From</label>
+                <input type="date" name="date_from" class="form-control" value="{{ filter_date_from }}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Date To</label>
+                <input type="date" name="date_to" class="form-control" value="{{ filter_date_to }}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Status</label>
+                <select name="status" class="form-select">
+                    <option value="">-- All --</option>
+                    <option value="finalized" {% if filter_status == 'finalized' %}selected{% endif %}>Finalized</option>
+                    <option value="not_finalized" {% if filter_status == 'not_finalized' %}selected{% endif %}>Not Finalized</option>
+                </select>
+            </div>
+        </div>
+        <div class="text-end mt-3">
+            <button type="submit" class="btn btn-primary">Apply Filters</button>
+            <a href="{% url 'saved_orders' %}" class="btn btn-secondary">Clear</a>
+        </div>
+    </form>
+
+    <!-- Orders Table -->
+    <form id="delete-form" method="POST" action="{% url 'delete_orders' %}">
+        {% csrf_token %}
+        <div class="card shadow">
+            <div class="card-body">
+                {% if orders %}
+                    <div class="mb-3">
+                        <button type="submit" class="btn btn-danger" onclick="return confirmDelete()">Delete Selected</button>
+                    </div>
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th><input type="checkbox" id="select-all"></th>
+                                <th>ID</th>
+                                <th>Table</th>
+                                <th>Date</th>
+                                <!-- <th>Finalized</th> -->
+                                <th>Details</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in orders %}
+                                <tr>
+                                    <td><input type="checkbox" name="order_ids" value="{{ order.id }}"></td>
+                                    <td>{{ order.id }}</td>
+                                    <td>{{ order.table.number }}</td>
+                                    <td>{{ order.created_at|date:"Y-m-d H:i" }}</td>
+                                    <!-- <td>{% if order.finalized %}✅{% else %}❌{% endif %}</td> -->
+                                    <td><a href="{% url 'order_detail' order.id %}" class="btn btn-sm btn-info">View</a></td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p class="text-muted">No orders found for selected filters.</p>
+                {% endif %}
+            </div>
+            <div class="card-footer text-end">
+                <strong>Total Sales: ₹{{ total_sales|floatformat:2 }}</strong>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+    document.getElementById('select-all').addEventListener('click', function () {
+        const checkboxes = document.querySelectorAll('input[name="order_ids"]');
+        checkboxes.forEach(cb => cb.checked = this.checked);
+    });
+
+    function confirmDelete() {
+        const selected = document.querySelectorAll('input[name="order_ids"]:checked');
+        if (selected.length === 0) {
+            alert("Please select at least one order to delete.");
+            return false;
+        }
+        return confirm(`Are you sure you want to delete ${selected.length} selected order(s)? This action cannot be undone.`);
+    }
+</script>
+</body>
+</html>
